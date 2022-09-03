@@ -1,6 +1,6 @@
 - hosts: all
-  gather_facts: no
-  remote_user: root
+  gather_facts: yes
+  remote_user: mach3
   tasks:
     - name: Install packages
       apt:
@@ -8,10 +8,9 @@
         autoremove: yes
         state: present
         pkg:
-          - samba
-          - samba-common-bin
-          - smbclient
-          - python-mako
+          - vlc
+          - awx-operator
+          - python3
           - vim
 
     - name: "reset cron"
@@ -53,44 +52,10 @@
           require dhcp_server_identifier
           slaac private
           interface wlan0
-          static ip_address=192.168.0.14/24
-          static routers=192.168.0.1
+          static ip_address=192.168.50.80
+          static routers=192.168.50.1
           static domain_name_servers=8.8.8.8
       tags: [ network ]
-
-    - name: samba config
-      blockinfile:
-        path: /etc/samba/smb.conf
-        block: |
-          [Films]
-          path = /ext-disk
-          read only = no
-          public = no
-          writable = yes
-          create mask=0644
-          directory mark=0755
-          force user = root
-          [pi]
-          path = /home/pi
-          read only = no
-          public = no
-          writable = yes
-          create mask=0644
-          directory mark=0755
-          force user = root
-      notify:
-        - restart samba
-      tags: [ samba ]
-
-    - name: "authorise SSH key mac 13 e 15"
-      copy:
-        dest: /root/.ssh/authorized_keys
-        content: |
-          ssh-rsa copy me from your local ~/.ssh/id_rsa.pub
-          ssh-rsa copy me from your local ~/.ssh/id_rsa.pub
-          ssh-rsa copy me from your local ~/.ssh/id_rsa.pub
-      tags: [ ssh ]
-
     - cron:
         name: "shutdown wifi at startup time"
         special_time: reboot
@@ -100,19 +65,11 @@
       tags: [ cron ]
 
     - cron:
-        name: "shutdown at 2am"
-        minute: "0"
-        hour: "2"
-        user: root
-        job: "/sbin/shutdown -P now"
-      tags: [ cron ]
-
-    - cron:
         name: "every month at 1am launch raspi-clean-and-update.sh"
         minute: "0"
         hour: "1"
-        day: 1
-        user: root
+        day: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,23,26,29
+        user: mach3
         job: "/bin/sh /usr/local/bin/raspi-clean-and-update.sh"
       tags: [ cron ]
 
@@ -128,7 +85,3 @@
           apt upgrade -y
           apt dist-upgrade -y
       tags: [ cron ]
-
-  handlers:
-    - name: restart samba
-      command: service smbd restart
