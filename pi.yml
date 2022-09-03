@@ -1,87 +1,97 @@
-- hosts: all
-  gather_facts: yes
-  remote_user: root
-  tasks:
-    - name: Install packages
-      apt:
-        update_cache: yes
-        autoremove: yes
-        state: present
-        pkg:
-          - vlc
-          - awx-operator
-          - python3
-          - vim
+- hosts: all 
+    become_method: su
+    become_user: mach3
+    tasks:
+      - name: Validate the sudoers file before saving
+        ansible.builtin.lineinfile:
+           path: /etc/sudoers
+           state: present
+           regexp: '^%ADMIN ALL='
+           line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
 
-    - name: "reset cron"
-      shell: "crontab -r || echo already clean"
-      tags: [ cron ]
+      - name: Install packages
+        apt:
+          update_cache: yes
+          autoremove: yes
+          state: present
+          pkg:
+            - vlc
+            - awx-operator
+            - python3
+            - vim
 
-    - file: { path: /ext-disk, state: directory }
-      tags: [ disk ]
+      - name: "reset cron"
+        shell: "crontab -r || echo already clean"
+        tags: [ cron ]
 
-    - name: '/etc/fstab'
-      lineinfile:
-        path: /etc/fstab
-        line: 'UUID=240A-1CED  /ext-disk  vfat   auto,nofail,noatime,rw,exec,uid=plex,gid=plex,nouser,async  0 0'
-        regexp: ^.*\/ext-disk
-      register: fstab
-      tags: [ disk, fstab ]
+      - file: { path: /ext-disk, state: directory }
+        tags: [ disk ]
 
-    - name: audio off
-      lineinfile:
-        path: /boot/config.txt
-        line: 'dtparam=audio=off'
-        state: present
-      tags: [ audio ]
+      - name: '/etc/fstab'
+        lineinfile:
+          path: /etc/fstab
+          line: 'UUID=240A-1CED  /ext-disk  vfat   auto,nofail,noatime,rw,exec,uid=plex,gid=plex,nouser,async  0 0'
+          regexp: ^.*\/ext-disk
+        register: fstab
+        tags: [ disk, fstab ]
 
-    - name: static ip
-      copy:
-        dest: /etc/dhcpcd.conf
-        owner: root
-        group: root
-        mode: 0664
-        content: |
-          hostname
-          clientid
-          persistent
-          option rapid_commit
-          option domain_name_servers, domain_name, domain_search, host_name
-          option classless_static_routes
-          option interface_mtu
-          require dhcp_server_identifier
-          slaac private
-          interface wlan0
-          static ip_address=192.168.50.80
-          static routers=192.168.50.1
-          static domain_name_servers=8.8.8.8
-      tags: [ network ]
-    - cron:
-        name: "shutdown wifi at startup time"
-        special_time: reboot
-        user: root
-        job: "ifdown wlan0; ifconfig wlan0 down"
-        state: present
-      tags: [ cron ]
+      - name: audio off
+        lineinfile:
+          path: /boot/config.txt
+          line: 'dtparam=audio=off'
+          state: present
+        tags: [ audio ]
 
-    - cron:
-        name: "every month at 1am launch raspi-clean-and-update.sh"
-        minute: "0"
-        hour: "1"
-        day: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,23,26,29
-        user: mach3
-        job: "/bin/sh /usr/local/bin/raspi-clean-and-update.sh"
-      tags: [ cron ]
+      - name: static ip
+        copy:
+          dest: /etc/dhcpcd.conf
+          owner: root
+          group: root
+          mode: 0664
+          content: |
+            hostname
+            clientid
+            persistent
+            option rapid_commit
+            option domain_name_servers, domain_name, domain_search, host_name
+            option classless_static_routes
+            option interface_mtu
+            require dhcp_server_identifier
+            slaac private
+            interface wlan0
+            static ip_address=192.168.50.80
+            static routers=192.168.50.1
+            static domain_name_servers=8.8.8.8
+        tags: [ network ]
+      - cron:
+          name: "shutdown wifi at startup time"
+          special_time: reboot
+          user: root
+          job: "ifdown wlan0; ifconfig wlan0 down"
+          state: present
+        tags: [ cron ]
 
-    - name: "maintenance script to delete logs, update dist upgrade"
-      copy:
-        dest: /usr/local/bin/raspi-clean-and-update.sh
-        content: |
-          set -x
-          find /var/log -name '*.gz' | xargs rm -f {}
-          find /var/log -type f | xargs cat /dev/null > {}
-          apt update -y
-          apt autoremove
-          apt upgrade -y
-          apt dist-upgrade -y
-      tags: [ cron ]
+      - cron:
+          name: "every month at 1am launch raspi-clean-and-update.sh"
+          minute: "0"
+          hour: "1"
+          day: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,23,26,29
+          user: mach3
+          job: "/bin/sh /usr/local/bin/raspi-clean-and-update.sh"
+        tags: [ cron ]
+
+      - name: "maintenance script to delete logs, update dist upgrade"
+        copy:
+          dest: /usr/local/bin/raspi-clean-and-update.sh
+          content: |
+            set -x
+            find /var/log -name '*.gz' | xargs rm -f {}
+            find /var/log -type f | xargs cat /dev/null > {}
+            apt update -y
+            apt autoremove
+            apt upgrade -y
+            apt dist-upgrade -y
+        tags: [ cron ]
+
+
+
