@@ -4,12 +4,12 @@
     - ping: ~
 
     - name: Update APT package manager repositories cache
-      become: true
+      become: false
       apt:
         update_cache: yes
 
     - name: Upgrade installed packages
-      become: true
+      become: false
       apt:
         upgrade: dist
 ...
