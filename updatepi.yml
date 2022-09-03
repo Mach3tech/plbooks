@@ -1,23 +1,10 @@
 ---
-- name: Transfer and execute a script.
-  hosts: all
-  remote_user: root
-  any_errors_fatal: true
-  gather_facts: no
-  become: true
-  become_method: su
-  become_user: mach3
-  become_flags: '-s /bin/sh'
-  tasks:
-    
-    tasks:
-    - ping: ~
+- hosts: all
+ become: true
+ become_user: root
 
-    - name: Update APT package manager repositories cache
-        apt:
-        update_cache: yes
-
-    - name: Upgrade installed packages
-        apt:
-        upgrade: dist
-...
+tasks:
+– name: Update apt repo and cache
+apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+– name: Upgrade modules
+apt: upgrade=yes
