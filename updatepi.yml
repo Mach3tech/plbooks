@@ -4,12 +4,18 @@
     - ping: ~
 
     - name: Update APT package manager repositories cache
-      become: false
-      apt:
+        become: yes
+        become_method: su
+        become_user: mach3
+        become_flags: '-K /bin/sh'
+        apt:
         update_cache: yes
 
     - name: Upgrade installed packages
-      become: false
+        become: yes
+        become_method: su
+        become_user: mach3
+        become_flags: '-K /bin/sh'
       apt:
         upgrade: dist
 ...
