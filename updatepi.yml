@@ -3,7 +3,7 @@
     become: true
     become_method: su
     become_user: mach3
-    become_flags: 'K'
+    become_flags: '-s /bin/sh -K'
 
   tasks:
     - ping: ~
