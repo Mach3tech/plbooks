@@ -1,6 +1,6 @@
 - hosts: all
   gather_facts: yes
-  remote_user: mach3
+  remote_user: root
   tasks:
     - name: Install packages
       apt:
