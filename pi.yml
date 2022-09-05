@@ -1,4 +1,5 @@
 - hosts: all 
+    become: true
     become_method: su
     become_user: mach3
     tasks:
