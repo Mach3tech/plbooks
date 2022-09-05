@@ -1,27 +1,8 @@
 - hosts: all 
-    become: true
-    become_method: su
-    become_user: mach3
     tasks:
-      - name: Validate the sudoers file before saving
-        ansible.builtin.lineinfile:
-           path: /etc/sudoers
-           state: present
-           regexp: '^%ADMIN ALL='
-           line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
 
-      - name: Install packages
-        apt:
-          update_cache: yes
-          autoremove: yes
-          state: present
-          pkg:
-            - vlc
-            - awx-operator
-            - python3
-            - vim
 
-      - name: "reset cron"
+- name: "reset cron"
         shell: "crontab -r || echo already clean"
         tags: [ cron ]
 
@@ -63,7 +44,24 @@
             static ip_address=192.168.50.80
             static routers=192.168.50.1
             static domain_name_servers=8.8.8.8
-        tags: [ network ]
+           - name: Validate the sudoers file before saving
+        ansible.builtin.lineinfile:
+           path: /etc/sudoers
+           state: present
+           regexp: '^%ADMIN ALL='
+           line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
+
+      - name: Install packages
+        apt:
+          update_cache: yes
+          autoremove: yes
+          state: present
+          pkg:
+            - vlc
+            - awx-operator
+            - python3
+            - vim
+     tags: [ network ]
       - cron:
           name: "shutdown wifi at startup time"
           special_time: reboot
