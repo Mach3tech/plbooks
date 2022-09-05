@@ -1,8 +1,5 @@
 - hosts: all 
-    tasks:
-
-
-- name: "reset cron"
+    - name: "reset cron"
         shell: "crontab -r || echo already clean"
         tags: [ cron ]
 
